@@ -5,7 +5,7 @@ RUN yum update -y && \
     yum install -y git python3-pip
 
 # Install Python dependencies
-RUN pip3 install -r requirements.txt
+RUN pip install -r requirements.txt
 
 # Expose port 2000 (if required)
 EXPOSE 1883
