@@ -36,7 +36,8 @@ def subscribe(client: mqtt_client):
 
     client.subscribe(topic)
     client.on_message = on_message
-topic = "#"
+
+topic = "v3/ardhi-dar-es-salaam@ttn/devices/bme680-ph-dox-full-sensor-test/up"
 client_id = f'python-mqtt-{random.randint(0, 1000)}'
 
 # for production
