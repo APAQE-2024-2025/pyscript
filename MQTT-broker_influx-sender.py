@@ -4,6 +4,10 @@ import influxdb_client
 from influxdb_client.client.write_api import SYNCHRONOUS
 import json
 import os
+from dotenv import load_dotenv
+
+
+load_dotenv()
 
 bucket = "piBucket"
 org = "ac73491f5a717267"
