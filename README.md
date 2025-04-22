@@ -1,25 +1,30 @@
+
 # MQTT to InfluxDB Bridge
 
-This script subscribes to MQTT topics from The Things Network, decodes incoming messages, and writes relevant sensor data to an InfluxDB database.
+This script subscribes to MQTT topics from The Things Network (TTN), decodes incoming messages, and writes relevant sensor data to an InfluxDB database.
 
 ## Requirements
 
 - Python 3.7+
 - MQTT credentials for The Things Network
-- InfluxDB token and config
-- `.env` 
+- InfluxDB token and configuration
+- `.env` file with environment variables
 
-## Python Dependencies
+---
 
-Install requirements using pip:
+## Development Setup (Testing)
+
+### Python Dependencies
+
+Install required packages:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Environment Variables
+### Environment Variables
 
-Set these in your environment or a `.env` file:
+Set these in your shell or a `.env` file:
 
 ```bash
 INFLUXDB_TOKEN=your_influxdb_token
@@ -27,29 +32,51 @@ MQTT_USERNAME=your_ttn_username
 MQTT_PASSWORD=your_ttn_password
 ```
 
-## Script Overview
+### Script Overview
 
-- Connects to the TTN MQTT broker.
-- Subscribes to all topics (`#`).
-- Filters out messages from port 69.
-- Expects sensor measurements in `decoded_payload.measurements`.
-- Maps measurement keys like `t` to `temperature`, `h` to `humidity`, etc.
-- Writes structured data points into InfluxDB.
+- Connects to the TTN MQTT broker
+- Subscribes to all topics (`#`)
+- Ignores messages from port `69`
+- Expects sensor data in `decoded_payload.measurements`
+- Maps short keys (e.g., `t`, `h`) to full names like `temperature`, `humidity`
+- Writes structured data into InfluxDB
 
-## Customization
+### Customization
 
-- Update the `name_map` dictionary to support more sensor types.
-- Modify the InfluxDB `bucket`, `org`, or `url` as needed.
+- Extend the `name_map` dictionary for additional sensors
+- Adjust InfluxDB config (`bucket`, `org`, `url`) as needed
 
-## Running the Script
+### Running the Script
 
 ```bash
 python your_script.py
 ```
 
-Press `Ctrl+C` to stop.
+Use `Ctrl+C` to stop.
 
-## Notes
+### Notes
 
-- InfluxDB writes are synchronous by default.
-- Ensure your device payload structure matches expectations.
+- InfluxDB writes are synchronous by default
+- Make sure your device payload matches the expected format
+
+---
+
+## Production Deployment
+
+### Clone the Repository
+
+```bash
+git clone git@github.com:APAQE-2024-2025/pyscript.git
+```
+
+### Build the Docker Image
+
+```bash
+docker compose build
+```
+
+### Start the Container
+
+```bash
+docker compose up -d
+```
