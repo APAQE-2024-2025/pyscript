@@ -6,7 +6,6 @@ import json
 import os
 from dotenv import load_dotenv
 
-
 load_dotenv()
 
 bucket = "piBucket"
@@ -23,12 +22,11 @@ def subscribe(client: mqtt_client):
             decoded_payload = data['uplink_message']['decoded_payload']
             print(f"Decoded payload: {decoded_payload}")
 
-            # Prepare data point for InfluxDB
             point = influxdb_client.Point("SensorData")
             for key, value in decoded_payload.items():
                 point = point.field(key, value)
                 print(point)
-            # write_api.write(bucket=bucket, org=org, record=point)
+            write_api.write(bucket=bucket, org=org, record=point)
             print("Data written to InfluxDB")
 
         except Exception as e:
@@ -40,18 +38,13 @@ def subscribe(client: mqtt_client):
 topic = "v3/ardhi-dar-es-salaam@ttn/devices/bme680-ph-dox-full-sensor-test/up"
 client_id = f'python-mqtt-{random.randint(0, 1000)}'
 
-# for production
-
 token = os.getenv('INFLUXDB_TOKEN')
 username = os.getenv('MQTT_USERNAME')
 password = os.getenv('MQTT_PASSWORD')
 
-# for testing (pycharm no work well with .env)
-
 #password =
 #token =
 #username =
-
 
 influx_client = influxdb_client.InfluxDBClient(
     url=url,
@@ -64,7 +57,7 @@ write_api = influx_client.write_api(write_options=SYNCHRONOUS)
 def connect_mqtt() -> mqtt_client:
     def on_connect(client, userdata, flags, rc, properties):
         if rc == 0:
-            print("Connected to MQTT")
+            print(f"\t  Connected to MQTT  \t")
         else:
             print(f"Failed, return code {rc}")
     client = mqtt_client.Client(client_id=client_id, callback_api_version=mqtt_client.CallbackAPIVersion.VERSION2)
@@ -75,6 +68,7 @@ def connect_mqtt() -> mqtt_client:
 
 def subscribe(client: mqtt_client):
     def on_message(client, userdata, msg):
+        f = "message"
         try:
             payload = msg.payload.decode()
             data = json.loads(payload)
@@ -82,35 +76,26 @@ def subscribe(client: mqtt_client):
             uplink = data.get('uplink_message', {})
             decoded_payload = uplink.get('decoded_payload', {})
 
-            # Check if message comes from port 69
             f_port = uplink.get('f_port')
             if f_port == 69:
                 print(f"Error: {decoded_payload} (received message from port 69). Skipping message.")
                 return
 
-            # Step 1: Check if required keys exist
             if not decoded_payload or 'measurements' not in decoded_payload:
                 print("Missing 'decoded_payload' or 'measurements' key. Skipping message.")
                 return
 
-            # Step 2: Prepare name mapping
             name_map = {
                 "t": "temperature",
                 "h": "humidity",
                 "p": "pressure",
                 "s": "sulfur"
-                # Add more mappings if needed
             }
-
-            # Step 3: Process measurements
             measurements = decoded_payload['measurements']
-
-            # Ensure measurements is a list
             if not isinstance(measurements, list):
                 print("'measurements' is not a list. Skipping message.")
                 return
 
-            # Assume device id from message
             device_id = data.get('end_device_ids', {}).get('device_id', 'unknown-device')
 
             point = influxdb_client.Point("SensorData")
@@ -125,9 +110,8 @@ def subscribe(client: mqtt_client):
 
             point = point.tag("device_id", device_id)
 
-            print(point)
+            print(f"|\t{1}\t|\t{point}")
 
-            # Write to InfluxDB
             write_api.write(bucket=bucket, org=org, record=point)
             print("Data written to InfluxDB")
 
