@@ -1,6 +1,7 @@
 import random
 from itertools import count
-
+import logging
+import logging.config
 from paho.mqtt import client as mqtt_client
 import influxdb_client
 from influxdb_client.client.write_api import SYNCHRONOUS
@@ -9,6 +10,9 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
+
+logging.config.fileConfig('temp.conf')
+logger = logging.getLogger('Brigge')
 
 bucket = "piBucket"
 org = "ac73491f5a717267"
@@ -22,17 +26,17 @@ def subscribe(client: mqtt_client):
             payload = msg.payload.decode()
             data = json.loads(payload)
             decoded_payload = data['uplink_message']['decoded_payload']
-            print(f"Decoded payload: {decoded_payload}")
+            logger.info("Decoded payload:", decoded_payload)
 
             point = influxdb_client.Point("SensorData")
             for key, value in decoded_payload.items():
                 point = point.field(key, value)
                 print(point)
             write_api.write(bucket=bucket, org=org, record=point)
-            print("Data written to InfluxDB")
+            logger.info("Data written to InfluxDB")
 
         except Exception as e:
-            print(f"Error processing message: {e}")
+            logger.error(f"Error processing message: {e}")
 
     client.subscribe(topic)
     client.on_message = on_message
@@ -59,9 +63,9 @@ write_api = influx_client.write_api(write_options=SYNCHRONOUS)
 def connect_mqtt() -> mqtt_client:
     def on_connect(client, userdata, flags, rc, properties):
         if rc == 0:
-            print(f"\t  Connected to MQTT  \t")
+            logger.info("Connected to MQTT")
         else:
-            print(f"Failed, return code {rc}")
+            logger.critical("Failed, return code", rc)
     client = mqtt_client.Client(client_id=client_id, callback_api_version=mqtt_client.CallbackAPIVersion.VERSION2)
     client.username_pw_set(username, password)
     client.on_connect = on_connect
@@ -79,11 +83,11 @@ def subscribe(client: mqtt_client):
 
             f_port = uplink.get('f_port')
             if f_port == 69:
-                print(f"Error: {decoded_payload} (received message from port 69). Skipping message.")
+                logger.error(f"Error: {decoded_payload} (received message from port 69). Skipping message.")
                 return
 
             if not decoded_payload or 'measurements' not in decoded_payload:
-                print("Missing 'decoded_payload' or 'measurements' key. Skipping message.")
+                logger.warning("Missing 'decoded_payload' or 'measurements' key. Skipping message.")
                 return
 
             name_map = {
@@ -111,13 +115,13 @@ def subscribe(client: mqtt_client):
 
             point = point.tag("device_id", device_id)
 
-            print(f"|\t{count}\t|\t{point}")
+            logger.info(f"|\t{count}\t|\t{point}")
 
             write_api.write(bucket=bucket, org=org, record=point)
-            print("Data written to InfluxDB")
+            logger.info("Data written to InfluxDB")
 
         except Exception as e:
-            print(f"Error processing message: {e}")
+            logger.error(f"Error processing message: {e}")
 
     client.subscribe(topic)
     client.on_message = on_message
