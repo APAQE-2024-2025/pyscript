@@ -17,7 +17,7 @@ broker = 'eu1.cloud.thethings.network'
 port = 1883
 
 def subscribe(client: mqtt_client):
-    def on_message(msg):
+    def on_message(client, userdata, msg):
         try:
             payload = msg.payload.decode()
             data = json.loads(payload)
@@ -69,7 +69,7 @@ def connect_mqtt() -> mqtt_client:
     return client
 
 def subscribe(client: mqtt_client):
-    def on_message(msg):
+    def on_message(client, userdata, msg):
         try:
             payload = msg.payload.decode()
             data = json.loads(payload)
@@ -111,7 +111,7 @@ def subscribe(client: mqtt_client):
 
             point = point.tag("device_id", device_id)
 
-            # print(f"|\t{count}\t|\t{point}")
+            print(f"|\t{count}\t|\t{point}")
 
             write_api.write(bucket=bucket, org=org, record=point)
             print("Data written to InfluxDB")
