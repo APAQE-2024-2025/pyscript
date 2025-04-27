@@ -1,4 +1,6 @@
 import random
+from itertools import count
+
 from paho.mqtt import client as mqtt_client
 import influxdb_client
 from influxdb_client.client.write_api import SYNCHRONOUS
@@ -15,7 +17,7 @@ broker = 'eu1.cloud.thethings.network'
 port = 1883
 
 def subscribe(client: mqtt_client):
-    def on_message(client, userdata, msg):
+    def on_message(msg):
         try:
             payload = msg.payload.decode()
             data = json.loads(payload)
@@ -67,8 +69,7 @@ def connect_mqtt() -> mqtt_client:
     return client
 
 def subscribe(client: mqtt_client):
-    def on_message(client, userdata, msg):
-        f = "message"
+    def on_message(msg):
         try:
             payload = msg.payload.decode()
             data = json.loads(payload)
@@ -110,7 +111,7 @@ def subscribe(client: mqtt_client):
 
             point = point.tag("device_id", device_id)
 
-            print(f"|\t{1}\t|\t{point}")
+            # print(f"|\t{count}\t|\t{point}")
 
             write_api.write(bucket=bucket, org=org, record=point)
             print("Data written to InfluxDB")
